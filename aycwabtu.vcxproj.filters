@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="aycwabtu_bs_testcases.c" />
+    <ClCompile Include="aycwabtu_main.c" />
+    <ClCompile Include="aycwabtu_bs_stream.c" />
+    <ClCompile Include="aycwabtu_bs_block.c" />
+    <ClCompile Include="aycwabtu_ts.c" />
+    <ClCompile Include="aycwabtu_bs_algo.c" />
+    <ClCompile Include="aycwabtu_bs_uint32.c" />
+    <ClCompile Include="aycwabtu_bs_sse2.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="aycwabtu_config.h" />
+    <ClInclude Include="aycwabtu_bs_testcases.h" />
+    <ClInclude Include="aycwabtu_bs_stream.h" />
+    <ClInclude Include="aycwabtu_bs_block.h" />
+    <ClInclude Include="aycwabtu_ts.h" />
+    <ClInclude Include="aycwabtu_bs_algo.h" />
+    <ClInclude Include="aycwabtu_bs_sse2.h" />
+    <ClInclude Include="aycwabtu_bs_uint32.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README" />
+  </ItemGroup>
+</Project>

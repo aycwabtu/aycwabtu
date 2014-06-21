@@ -1,0 +1,18 @@
+# Visual Studio crap
+*.ncb
+*.opensdf
+*.sdf
+*.suo
+*.user
+**/Release/*
+**/Debug/*
+
+# build artifacts
+*.zip
+**/obj/*
+*.a
+resume
+keyfound
+testfile.ts
+*.log
+aycwabtu_version.h
