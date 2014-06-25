@@ -3,6 +3,8 @@
 CC          = gcc
 LD          = gcc
 
+SHELL=bash
+
 OBJDIR := obj
 
 DVBCSAINC 	:= libdvbcsa/dvbcsa

@@ -4,15 +4,10 @@ CSA brute force bitslice stream and block prototypes
 #ifndef aycw_H
 #define aycw_H
 
-typedef unsigned char        uint8;
-typedef unsigned short       uint16;
-typedef unsigned int         uint32;
-typedef unsigned int         size_t;
-typedef unsigned char        uint8_t;
-typedef unsigned short       uint16_t;
-typedef unsigned int         uint32_t;
-typedef unsigned long long   uint64_t;
-
+#include <stdint.h>
+typedef uint8_t      uint8;
+typedef uint16_t     uint16;
+typedef uint32_t     uint32;
 
 #define PARALLEL_32_INT       1
 #define PARALLEL_128_SSE2     2
