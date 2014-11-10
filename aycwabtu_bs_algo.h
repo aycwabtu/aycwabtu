@@ -7,7 +7,7 @@ void aycw_assert_key_transpose(uint8 *keylist, dvbcsa_bs_word_t *bs_keys);
 
 void aycw_assert_stream(dvbcsa_bs_word_t * data, unsigned int outbits, dvbcsa_bs_word_t * BS_key, dvbcsa_bs_word_t *bs_data_sb0);
 
-int aycw_checkPESheader(dvbcsa_bs_word_t *data, dvbcsa_bs_word_t *candidates);
+void aycw_bs_xor24(dvbcsa_bs_word_t *, dvbcsa_bs_word_t *, dvbcsa_bs_word_t *);
 
 /* increment key bytes 5 and 6 and calculate checksum in byte 7 */
 void aycw_bs_increment_keys_inner(dvbcsa_bs_word_t *keys_bs);

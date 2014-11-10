@@ -107,35 +107,6 @@ void aycw_bs_increment_keys_inner(dvbcsa_bs_word_t *keys_bs)
 
 
 
-int aycw_checkPESheader(dvbcsa_bs_word_t *data, dvbcsa_bs_word_t *candidates)
-{
-   dvbcsa_bs_word_t tmp, c;
-   int i, j, ret;
-   uint8 a;
-
-   c = BS_VAL8(00);
-   ret = 0;
-
-   // every 8 elements in bytesliced data array are belong to the same data block
-   for (i = 0; i < 8; i++)
-   {
-      // check also for 4th byte Audio streams (0xC0-0xDF), Video streams (0xE0-0xEF) ?
-      tmp = BS_OR(BS_OR(data[i], data[i + 8]), BS_XOR(data[i + 16], BS_VAL8(01)));    // 0x00 | 0x00 | 0x01^0x01 == 0x00
-      // OPTIMIZEME: check whole batch for zero bits at once?
-      for (j = 0; j < BS_BATCH_BYTES; j++)
-      {
-         a = BS_EXTRACT8(tmp, j);
-         if (a == 0)
-         {
-            // key candidate found in bytesliced data array at i, j
-            c = BS_OR(c, BS_SHL(BS_VAL_LSDW(1), i*BS_BATCH_BYTES + j));
-            ret++;
-         }
-      }
-   }
-   *candidates = c;
-   return ret;
-}
 
 void aycw_assert_key_transpose(uint8 *keylist, dvbcsa_bs_word_t *bs_keys)
 {
@@ -285,13 +256,13 @@ void aycw_extractbsdata(dvbcsa_bs_word_t* bs_data, unsigned char slice, unsigned
    Enable this after serious changes of the algorithm
    @param   probedata[in]     encrypted packet data (regular) 
    @param   keylist[in]       BS_BATCH_SIZE keys in regular form
-   @param   bys_data[in]      decryption result in byte-sliced form
+   @param   data[in]          decryption result in bit/byte-sliced form
    @return  1 if successful
 */
-void aycw_assert_decrypt_result(unsigned char *probedata, uint8 *keylist, dvbcsa_bs_word_t *bys_data)
+void aycw_assert_decrypt_result(unsigned char *probedata, uint8 *keylist, dvbcsa_bs_word_t *data)
 {
 #ifdef SELFTEST
-   int            i, j;
+   int            i,j;
 
    for (i = 0; i < BS_BATCH_SIZE; i++)
    {
@@ -308,14 +279,18 @@ void aycw_assert_decrypt_result(unsigned char *probedata, uint8 *keylist, dvbcsa
       // loop over DB0
       // aycw_extract_bytesliced_data(...);
 
+#ifdef USEALLBITSLICE
+      aycw_extractbsdata(data, i, 4*8, ayc_data);
+#else
       for (j = 0; j < 8; j++)
       {
          int elem = i / BS_BATCH_BYTES + j * 8;    // number of bytesliced element
          int shift = i % BS_BATCH_BYTES * 8 ;      // byte shift inside element
-         ayc_data[j] = (uint8)BS_EXTLS32(BS_SHR(bys_data[elem], shift));
+         ayc_data[j] = (uint8)BS_EXTLS32(BS_SHR(data[elem], shift));
       }
+#endif
 
-      if (memcmp(lib_data, ayc_data, 4))  // only check 4 decrypted bytes, because stream generates only 4
+      if (memcmp(lib_data, ayc_data, 3))
       {
          aycw_fatal_error("aycw_assert_decrypt_result() failed\n");
       }
@@ -330,6 +305,16 @@ void aycw_assert_decrypt_result(unsigned char *probedata, uint8 *keylist, dvbcsa
       keylist[i * 8 + 7] = keylist[i * 8 + 4] + keylist[i * 8 + 5] + keylist[i * 8 + 6];
    }
 #endif
+}
+
+/**
+out[i] = in1[i] ^ in2[i]  for i 0...23
+*/
+void aycw_bs_xor24(dvbcsa_bs_word_t *out, dvbcsa_bs_word_t *in1, dvbcsa_bs_word_t *in2)
+{
+   int i;
+   for (i = 0; i < 24; i++)
+      out[i] = BS_XOR(in1[i], in2[i]);
 }
 
 #if 0
@@ -386,7 +371,7 @@ void aycw_testpattern(dvbcsa_bs_word_t *data, int count)
 }
 #endif
 
-#if (USE_SLOW_BIT2BYTESLICE==1)
+#ifdef USE_SLOW_BIT2BYTESLICE
 void aycw_bit2byteslice(dvbcsa_bs_word_t *data, int count)
 {
    int i, j, k;

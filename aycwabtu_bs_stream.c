@@ -591,6 +591,7 @@ void aycw_stream_decrypt(dvbcsa_bs_word_t * data_return, unsigned int outbits, d
       aycw__vInitRound(3, i, &stPQXYZ, &stCDEF, &stRegister, bs_data_sb0);
    }
 
+   /* OPTIMIZEME: add blokc+stream xor + PES check, to stop bit generation immediately if foreseeable its no PES header */
    for (i = 0; i < outbits; i += 8)
    {
       aycw__vRound(&stPQXYZ, &stCDEF, &stRegister, &BS_Streambit0, &BS_Streambit1);

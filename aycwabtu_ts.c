@@ -66,7 +66,6 @@ unsigned char* ayc_read_packet(unsigned char* buf, int *pid, int *crypted, int *
          {
             unsigned char* data;
             return &buf[4] + buf[4] + 1;   /* skipping adapt field. points now to 1st payload byte */
-            return data;
          }
         // data = &buf[4];
         // if (*data < 188 - 4 - 1 - 16)

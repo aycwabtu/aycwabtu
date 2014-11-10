@@ -1,8 +1,20 @@
+/*
+   aycwabtu_bs_block.c
+
+   this file contains the block implementation in byte sliced form where
+   the sbox is a look up table. See #define  USEALLBITSLICE
+
+*/
+
 
 #include <string.h>
 
 #include "aycwabtu_config.h"
 #include "aycwabtu_bs_block.h"
+
+#ifndef USEALLBITSLICE
+
+void AYCW_INLINE aycw_block_sbox(dvbcsa_bs_word_t *);
 
 #ifdef USEWORDBLOCKSBOX
 static uint16   aycw_block_sbox16[0x10000];
@@ -244,15 +256,12 @@ void aycw_init_block(void)
    Nearly the same as dvbcsa_bs_block_decrypt_register. kkmulti is now 8 times in size.
    @parameter keys[in]  the keys array contains the bytesliced array [56][8][BS_BATCH_BYTES] bytes but is 
                         now treated as 56 x 8 x dvbcsa_bs_word_t.
-   @parameter data      output of stream stage in byte sliced form data 
-                        [PLBYTES][8][BS_BATCH_BYTES] bytes.
-                        PLBYTES is number of payload bytes, e.g. 16 for two 8 byte blocks
+   @parameter r         ts input data ib0 + some free space left in front for virtual shift
 */
 void aycw_block_decrypt(const dvbcsa_bs_word_t* keys, dvbcsa_bs_word_t* r)
 {
-   int	i, g;
-   dvbcsa_bs_word_t in;
-   dvbcsa_bs_word_t w;
+   int  i;                      // 56 rounds
+   int  j;                      // 8 batches
 
 #ifdef USEBLOCKVIRTUALSHIFT
    r += 8 * 56;
@@ -261,27 +270,50 @@ void aycw_block_decrypt(const dvbcsa_bs_word_t* keys, dvbcsa_bs_word_t* r)
    // loop over kk[55]..kk[0]
    for (i = 55; i >= 0; i--)
    {
-      dvbcsa_bs_word_t *r6_N = r + 8 * 6;
+      dvbcsa_bs_word_t *r6xK;         // help pointer: r6 (before shift) after xoring with keys
+      dvbcsa_bs_word_t r7xS;          // sbox output xor r7 (before shift), aka 'L'
+      dvbcsa_bs_word_t perm;          // sbox out + permutation
+
+      r6xK = &r[8 * 6];
 
 #ifdef USEBLOCKVIRTUALSHIFT
       r -= 8;	/* virtual shift of registers */
 #endif
 
-      for (g = 0; g < 8; g++)
+      for (j = 0; j < 8; j++)
       {
 
 #if 0
          /* calling per reference is 19% faster with MS CC but gcc decided 
             to optimize the whole funtion call away for some reason ?!? :-( */
-         dvbcsa_bs_word_t sbox_out = BS_XOR(keys[i * 8 + g], r6_N[g]);
+         dvbcsa_bs_word_t sbox_out = BS_XOR(keys[i * 8 + j], r6xK[j]);
          aycw_block_sbox(&sbox_out);
 #else
-         dvbcsa_bs_word_t sbox_out = aycw_block_sbox_by_value(BS_XOR(keys[i * 8 + g], r6_N[g]));
+         dvbcsa_bs_word_t sbox_out = aycw_block_sbox_by_value(BS_XOR(keys[i * 8 + j], r6xK[j]));
+#endif
+#ifdef BLOCKDEBUG
+         if (j==0) {
+            // debug dump slice 0 regs 'before' 1st shift
+            uint8 sn, wn;
+            dvbcsa_bs_word_t tmp1 = BS_XOR(keys[i * 8 + j], r6xK[j]);
+            printf("%d: %02x %02x %02x %02x  %02x %02x %02x %02x  r6xK %02x sout %02x\n", i,
+               (uint8)BS_EXTLS32(r[8 * 1]),
+               (uint8)BS_EXTLS32(r[8 * 2]),
+               (uint8)BS_EXTLS32(r[8 * 3]),
+               (uint8)BS_EXTLS32(r[8 * 4]),
+               (uint8)BS_EXTLS32(r[8 * 5]),
+               (uint8)BS_EXTLS32(r[8 * 6]),
+               (uint8)BS_EXTLS32(r[8 * 7]),
+               (uint8)BS_EXTLS32(r[8 * 8]),
+               (uint8)BS_EXTLS32(tmp1),
+               (uint8)BS_EXTLS32(sbox_out)
+            );
+         }
 #endif
 
          // bit permutation
 
-         in = 
+         perm = 
             BS_OR(
                BS_OR(
                   BS_OR (
@@ -295,41 +327,62 @@ void aycw_block_decrypt(const dvbcsa_bs_word_t* keys, dvbcsa_bs_word_t* r)
                ),
                BS_OR(       
                   BS_SHR (BS_AND (sbox_out, BS_VAL8(40)), 6),
-				  BS_SHR(BS_AND(sbox_out, BS_VAL8(80)), 4)
+				      BS_SHR(BS_AND(sbox_out, BS_VAL8(80)), 4)
 				  )
             );
 
 #ifdef USEBLOCKVIRTUALSHIFT
-         w = BS_XOR(r[8 * 8 + g], sbox_out);
+         r7xS = BS_XOR(r[8 * 8 + j], sbox_out);
 
-         r[8 * 0 + g] = w;
-         BS_XOREQ(r[8 * 2 + g], w);
-         BS_XOREQ(r[8 * 3 + g], w);
-         BS_XOREQ(r[8 * 4 + g], w);
-         BS_XOREQ(r[8 * 6 + g], in);
+         r[8 * 0 + j] = r7xS;
+         BS_XOREQ(r[8 * 2 + j], r7xS);
+         BS_XOREQ(r[8 * 3 + j], r7xS);
+         BS_XOREQ(r[8 * 4 + j], r7xS);
+         BS_XOREQ(r[8 * 6 + j], perm);
 #else
-         w = BS_XOR(r[8 * 7 + g], sbox_out);
+         r7xS = BS_XOR(r[8 * 7 + j], sbox_out);
 
-         r[8 * 7 + g] = r[8 * 6 + g];
-         r[8 * 6 + g] = BS_XOR(r[8 * 5 + g], in);
-         r[8 * 5 + g] = r[8 * 4 + g];
-         r[8 * 4 + g] = BS_XOR(r[8 * 3 + g], w);
-         r[8 * 3 + g] = BS_XOR(r[8 * 2 + g], w);
-         r[8 * 2 + g] = BS_XOR(r[8 * 1 + g], w);
-         r[8 * 1 + g] = r[8 * 0 + g];
-         r[8 * 0 + g] = w;
+         r[8 * 7 + j] = r[8 * 6 + j];
+         r[8 * 6 + j] = BS_XOR(r[8 * 5 + j], perm);
+         r[8 * 5 + j] = r[8 * 4 + j];
+         r[8 * 4 + j] = BS_XOR(r[8 * 3 + j], r7xS);
+         r[8 * 3 + j] = BS_XOR(r[8 * 2 + j], r7xS);
+         r[8 * 2 + j] = BS_XOR(r[8 * 1 + j], r7xS);
+         r[8 * 1 + j] = r[8 * 0 + j];
+         r[8 * 0 + j] = r7xS;
 #endif
       }
    }
 }
 
-/* xor 1st decrypted (stream+block) block with 2nd decrypted (stream only) block */
-void aycw_block_xor(dvbcsa_bs_word_t *r, dvbcsa_bs_word_t *bs_data)
+int aycw_checkPESheader(dvbcsa_bs_word_t *data, dvbcsa_bs_word_t *candidates)
 {
-   int i;
+   dvbcsa_bs_word_t tmp, c;
+   int i, j, ret;
+   uint8 a;
 
-   for (i = 0; i < 64; i++)      /* OPTIMIZEME: only first three bytes needed for PES check */
+   c = BS_VAL8(00);
+   ret = 0;
+
+   // every 8 elements in bytesliced data array are belong to the same data block
+   for (i = 0; i < 8; i++)
    {
-      BS_XOREQ(r[i], bs_data[i]); /* result in r */
+      // check also for 4th byte Audio streams (0xC0-0xDF), Video streams (0xE0-0xEF) ?
+      tmp = BS_OR(BS_OR(data[i], data[i + 8]), BS_XOR(data[i + 16], BS_VAL8(01)));    // 0x00 | 0x00 | 0x01^0x01 == 0x00
+      // OPTIMIZEME: check whole batch for zero bits at once?
+      for (j = 0; j < BS_BATCH_BYTES; j++)
+      {
+         a = BS_EXTRACT8(tmp, j);
+         if (a == 0)
+         {
+            // key candidate found in bytesliced data array at i, j
+            c = BS_OR(c, BS_SHL(BS_VAL_LSDW(1), i*BS_BATCH_BYTES + j));
+            ret++;
+         }
+      }
    }
+   *candidates = c;
+   return ret;
 }
+
+#endif //#ifndef USEALLBITSLICE

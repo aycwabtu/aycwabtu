@@ -19,18 +19,18 @@ features
 * written in C. Developed in Visual Studio 2013, tested with gcc 4.8.2+cygwin 2.844
 * much potential for speed improvements
 
+
 to do list
 ----------
 * speed improvement, see ideas below
 * multi threading
 * support for 256 bits parallel with advanced vector extensions AVX
 * OpenCL support
+* optimize the block sbox boolean equations. Only slightly faster with 128 bits. See da_diett.pdf Chpt. 3.1
 
 speed optimization ideas
 ------------------------
 * most important: OpenCL support (not only CUDA, please!). 
-* do the whole block processing in bit sliced form rather than byte sliced form. See da_diett.pdf Chpt. 3.1
-* let stream work on r and not bs_data
 * check, why aycw_block_sbox(&sbox_out) fails in gcc, possible speedup ~19%
 * block decrypt first (does not depend on stream). Then stream afterwards, stop XORing immediately 
   if foreseeable there is no PES header

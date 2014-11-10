@@ -12,11 +12,12 @@
 #include "aycwabtu_config.h"
 #include "aycwabtu_bs_stream.h"
 #include "aycwabtu_bs_block.h"
+#include "aycwabtu_bs_block_ab.h"
 #include "aycwabtu_bs_algo.h"
 #include "aycwabtu_ts.h"
 
 #include "aycwabtu_version.h"    // this file contains GITSHA1 define and is generated before build
-#define VERSION   "V1.0"
+#define VERSION   "V1.1"
 
 /* bitslice test cases */
 #include "aycwabtu_bs_testcases.h"
@@ -190,8 +191,13 @@ void aycw_welcome_banner(void)
    printf(" DEBUG");
 #endif
    printf("\ngit version hash: %s\n", GITSHA1);
-   printf("\nCPU only, single threaded version\n");
-   printf("parallel bitslice batch size is %d\n", BS_BATCH_SIZE);
+   printf("\nCPU only, single threaded version");
+#ifdef USEALLBITSLICE
+   printf(" - bool sbox");
+#else
+   printf(" - table sbox");
+#endif
+   printf("\nparallel bitslice batch size is %d\n", BS_BATCH_SIZE);
    printf("----------------------------------------\n");
    setbuf(stdout, NULL);   // for gcc
 }
@@ -204,17 +210,16 @@ int main(int argc, char *argv[])
    
    /************** stream ***************/
    dvbcsa_bs_word_t     bs_data_sb0[8 * 16];    // constant scrambled data blocks SB0 + SB1, global init for stream, da_diett.pdf 5.1
-   dvbcsa_bs_word_t     bs_data_ib0[8 * 16];    // IB0 + IB1, bitsliced data. IB0 is constant, IB1 is output of stream for each batch
+   dvbcsa_bs_word_t     bs_data_ib0[8 * 16];    // IB0 is bit/byte sliced block init vector, ib1 is bit sliced stream output
    /************** block ***************/
-   dvbcsa_bs_word_t     keys_bs[64];                     // bit sliced keys for block
-   dvbcsa_bs_word_t     keyskk[448];                     // bit sliced scheduled keys (64 bit -> 448 bit)
+   dvbcsa_bs_word_t     keys_bs[64];            // bit sliced keys for block
+   dvbcsa_bs_word_t     keyskk[448];            // bit sliced scheduled keys (64 bit -> 448 bit)
 
 #ifdef USEBLOCKVIRTUALSHIFT
-   dvbcsa_bs_word_t	r[8 * (8 + 56)];  /* working data block */
-#else
-   dvbcsa_bs_word_t	r[8 * (8 + 0)];  /* working data block */
+   dvbcsa_bs_word_t	r[8 * (1 + 8 + 56)];        // working data block
+#else                                           //
+   dvbcsa_bs_word_t	r[8 * (1 + 8 + 0)];         //
 #endif
-   dvbcsa_bs_word_t  *p;               /* help pointer */
    dvbcsa_bs_word_t  candidates;       /* 1 marks a key candidate in the batch */
 
    uint8 keylist[BS_BATCH_SIZE][8];     /* the list of keys for the batch run in non-bitsliced form */
@@ -226,7 +231,7 @@ int main(int argc, char *argv[])
       { 0xB2, 0x74, 0x85, 0x51, 0xF9, 0x3C, 0x9B, 0xD2,  0x30, 0x9E, 0x8E, 0x78, 0xFB, 0x16, 0x55, 0xA9},
       { 0x25, 0x2D, 0x3D, 0xAB, 0x5E, 0x3B, 0x31, 0x39,  0xFE, 0xDF, 0xCD, 0x84, 0x51, 0x5A, 0x86, 0x4A},
       { 0xD0, 0xE1, 0x78, 0x48, 0xB3, 0x41, 0x63, 0x22,  0x25, 0xA3, 0x63, 0x0A, 0x0E, 0xD3, 0x1C, 0x70} };
-   currentkey32 = 0x00 << 24 | 0x11 << 16 | 0x16 << 8 | 0x44;
+   currentkey32 = 0x00 << 24 | 0x11 << 16 | 0x15 << 8 | 0x00;
    /* key   00 11 22 33  44 00 00 44 decrypts to
                000001ff11111111aa11111111111155
                000001ff11111111aa11111111111156
@@ -297,13 +302,13 @@ int main(int argc, char *argv[])
 
    aycw_init_stream(&probedata[0], &bs_data_sb0);
 
-   /* prepare the 8 byte of IB0 in byte sliced once */
    for (i = 0; i < 8 * 8; i++)
    {
       bs_data_ib0[i] = bs_data_sb0[i];
    }
+#ifndef USEALLBITSLICE
    aycw_bit2byteslice(bs_data_ib0, 1);
-
+#endif
 
    /************* outer loop ******************/
    // run over whole key search space
@@ -358,36 +363,48 @@ int main(int argc, char *argv[])
 
          aycw_assert_stream(&bs_data_ib0[64], 25, keys_bs, bs_data_sb0);     // check if first bytes of IB1 output are correct
 
+#ifndef USEALLBITSLICE
          aycw_bit2byteslice(&bs_data_ib0[64], 1);
-            
-         /************** block ***************/
-#ifdef USEBLOCKVIRTUALSHIFT
-         p = (r + 8 * 56);
-#else
-         p = r;
 #endif
+
+         /************** block ***************/
          for (i = 0; i < 8 * 8; i++)
          {
-            p[i] = bs_data_ib0[i];  /* OPTIMIZEME: let stream and block work on the same memory. r must be bigger to let IB0 fit in */
+#ifdef USEBLOCKVIRTUALSHIFT
+            r[8 * 56 + i] = bs_data_ib0[i];      // r is the input/output working data for block
+#else                                            // restore after each block run
+            r[i] = bs_data_ib0[i];               // 
+#endif
          }
 
          /* block schedule key 64 bits -> 448 bits */  /* OPTIMIZEME: only the 16 inner bits in inner loop */
          aycw_block_key_schedule(keys_bs, keyskk);
 
          /* byte transpose */
-         //aycw_kk_transpose_8x8cw(keyskk);
+#ifndef USEALLBITSLICE
          aycw_bit2byteslice(keyskk, 7);    // 448 scheduled key bits / 64 key bits
+#endif
 
          aycw_block_decrypt(keyskk, r);   // r is the generated block output
 
-         /* xor 1st decrypted (stream+block) block with 2nd decrypted (stream only) block, write to r */
-         aycw_block_xor(r, &bs_data_ib0[64]);
+         {
+/*#ifdef USEALLBITSLICE
+            uint8 dump[8];
+            aycw_extractbsdata(r, 0, 64, dump);
+            printf("%02x %02x %02x %02x  %02x %02x %02x %02x\n",dump[0],dump[1],dump[2],dump[3],dump[4],dump[5],dump[6],dump[7]);
+#else
+            printf("%02x %02x %02x %02x  %02x %02x %02x %02x\n",(uint8)BS_EXTLS32(r[8 * 0]),(uint8)BS_EXTLS32(r[8 * 1]),(uint8)BS_EXTLS32(r[8 * 2]),(uint8)BS_EXTLS32(r[8 * 3]),(uint8)BS_EXTLS32(r[8 * 4]),(uint8)BS_EXTLS32(r[8 * 5]),(uint8)BS_EXTLS32(r[8 * 6]),(uint8)BS_EXTLS32(r[8 * 7]));
+#endif*/
+         }
+
+         /************** block xor stream ***************/
+         aycw_bs_xor24(r, r, &bs_data_ib0[64]);
 
          //for (i = 32; i < 64; i++) r[i] = BS_VAL8(55);   // destroy decrypted bytes 4...7 of DB0 shouldnt matter
 
          aycw_assert_decrypt_result(probedata, keylist, r);
 
-         i = aycw_checkPESheader(r, &candidates);
+         i = aycw_checkPESheader(r, &candidates);  /* OPTIMIZEME: return value should be first possible slice number to let the loop below start right there */
          if (i)
          {
             // candidate keys marked with '1' for the last batch run

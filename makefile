@@ -21,6 +21,7 @@ ayc_src = \
 	aycwabtu_main.c             \
 	aycwabtu_bs_algo.c          \
 	aycwabtu_bs_block.c         \
+	aycwabtu_bs_block_ab.c      \
 	aycwabtu_bs_sse2.c     		\
 	aycwabtu_bs_stream.c        \
 	aycwabtu_bs_uint32.c	    \

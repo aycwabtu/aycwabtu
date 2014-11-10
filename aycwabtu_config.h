@@ -49,9 +49,18 @@ Run test cases with self test enabled after changing calculation dependent parts
 /* block key bits permutation uses direct assignments instead LUT*/
 #define  USEFASTBLOCKKEYPERM
 
-/* Use a generic (slow) version of function aycw_bit2byteslice() to check and debug 
+/* The whole block part runs (like stream) in bit sliced not byte sliced mode.
+   The block sbox is implemented by boolean equations instad of a 8/16 bit LUT.
+   LUT is faster for small batches, but depends on batch size. 
+   Enable USEALLBITSLICE for large batches */
+#define  USEALLBITSLICE
+
+/* print block registers each round */
+//#define BLOCKDEBUG
+
+/* Use a generic (slow) version of function aycw_bit2byteslice() to check and debug
    the faster batch sized implementation */
-#define USE_SLOW_BIT2BYTESLICE 0
+//#define USE_SLOW_BIT2BYTESLICE
 
 /****************************************** brute force helper prototypes ********************************/
 

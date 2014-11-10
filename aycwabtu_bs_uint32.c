@@ -82,7 +82,7 @@ void aycw_key_transpose(const uint8 *key, dvbcsa_bs_word_t *row)
    }
 }
 
-#if (USE_SLOW_BIT2BYTESLICE==0)
+#ifndef USE_SLOW_BIT2BYTESLICE
 void aycw_bit2byteslice(dvbcsa_bs_word_t *data, int count)
 {
    int i, j, k;

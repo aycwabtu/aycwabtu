@@ -108,7 +108,7 @@ void aycw_key_transpose(const uint8 key[BS_BATCH_SIZE][8], dvbcsa_bs_word_t *row
 #error aycw_bit2byteslice() for 128 batch not available yet
 #endif
 
-#if (USE_SLOW_BIT2BYTESLICE==0)
+#ifndef USE_SLOW_BIT2BYTESLICE
 void aycw_bit2byteslice(dvbcsa_bs_word_t *data, int count)
 {
    int i, j, k;
