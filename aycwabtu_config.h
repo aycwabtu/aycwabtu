@@ -37,6 +37,14 @@ Run test cases with self test enabled after changing calculation dependent parts
 #define SELFTEST
 #endif
 
+// performance measure of some core algo parts
+// measure make sense in release config only
+#if _DEBUG
+//#define USE_MEASURE
+#else
+//#define USE_MEASURE
+#endif
+
 #define AYCW_INLINE __inline
 
 
@@ -52,8 +60,8 @@ Run test cases with self test enabled after changing calculation dependent parts
 /* The whole block part runs (like stream) in bit sliced not byte sliced mode.
    The block sbox is implemented by boolean equations instad of a 8/16 bit LUT.
    LUT is faster for small batches, but depends on batch size. 
-   Enable USEALLBITSLICE for large batches */
-#define  USEALLBITSLICE
+   Enable USEBOOLSBOX for large batches */
+#define  USEBOOLSBOX
 
 /* print block registers each round */
 //#define BLOCKDEBUG

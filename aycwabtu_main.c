@@ -184,6 +184,60 @@ void aycw_write_keyfoundfile(unsigned char *cw)
    }
 }
 
+aycw_tstRegister     stRegister;
+   dvbcsa_bs_word_t	r[8 * (1 + 8 + 56)];        // working data block
+
+   dvbcsa_bs_word_t     bs_128[8 * 16];
+   dvbcsa_bs_word_t     bs_64_1[64];
+   dvbcsa_bs_word_t     bs_64_2[64];
+   dvbcsa_bs_word_t     bs_448[448];
+void aycw_partsbench(void)
+{
+#ifdef USE_MEASURE
+   int i;
+   const long int max = 1 << 19;
+   long int start, diff;
+
+   printf("performance measurement of all algorithmic parts for %d loops\n", max);
+
+   start = aycw__getTicks_ms();
+   for (i = 0; i<max; i++) aycw_stream_decrypt(bs_64_2, 25, bs_64_1, bs_128);
+   printf("aycw_stream_decrypt()             %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+   for (i = 0; i<max; i++) aycw__vInitShiftRegister(bs_64_1, &stRegister);
+   printf("  aycw__vInitShiftRegister()      %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+#ifndef USEBOOLSBOX
+   for (i = 0; i<max; i++) aycw_bit2byteslice(bs_448, 7);
+#endif
+   printf("aycw_bit2byteslice(7)             %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+   for (i = 0; i<max; i++) aycw_block_key_schedule(bs_64_1, bs_448);
+   printf("aycw_block_key_schedule           %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+   for (i = 0; i<max; i++) aycw_block_decrypt(bs_448, r);
+   printf("aycw_block_decrypt                %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+#ifdef USEBOOLSBOX
+   for (i = 0; i<56 * max; i++) aycw_block_sbox(r, bs_448);
+#else
+   for (i = 0; i<56 * max; i++) aycw_block_sbox(r, bs_448);
+#endif
+   printf("  aycw_block_sbox  (56x)          %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   start = aycw__getTicks_ms();
+   for (i = 0; i<max; i++) aycw_checkPESheader(r, bs_64_1);
+   printf("aycw_checkPESheader               %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
+
+   //printf("%d %d %d\n", bs_64_1[0], r[0], bs_448[0]);
+#endif
+}
+
 void aycw_welcome_banner(void)
 {
    printf("AYCWABTU CSA brute forcer %s %s", VERSION, __DATE__);
@@ -192,7 +246,7 @@ void aycw_welcome_banner(void)
 #endif
    printf("\ngit version hash: %s\n", GITSHA1);
    printf("\nCPU only, single threaded version");
-#ifdef USEALLBITSLICE
+#ifdef USEBOOLSBOX
    printf(" - bool sbox");
 #else
    printf(" - table sbox");
@@ -241,6 +295,7 @@ int main(int argc, char *argv[])
 
    /************ global initilaization *****************/
    aycw_welcome_banner();
+   aycw_partsbench();
 
    if (argc == 4)
    {
@@ -306,7 +361,7 @@ int main(int argc, char *argv[])
    {
       bs_data_ib0[i] = bs_data_sb0[i];
    }
-#ifndef USEALLBITSLICE
+#ifndef USEBOOLSBOX
    aycw_bit2byteslice(bs_data_ib0, 1);
 #endif
 
@@ -363,7 +418,7 @@ int main(int argc, char *argv[])
 
          aycw_assert_stream(&bs_data_ib0[64], 25, keys_bs, bs_data_sb0);     // check if first bytes of IB1 output are correct
 
-#ifndef USEALLBITSLICE
+#ifndef USEBOOLSBOX
          aycw_bit2byteslice(&bs_data_ib0[64], 1);
 #endif
 
@@ -381,14 +436,14 @@ int main(int argc, char *argv[])
          aycw_block_key_schedule(keys_bs, keyskk);
 
          /* byte transpose */
-#ifndef USEALLBITSLICE
+#ifndef USEBOOLSBOX
          aycw_bit2byteslice(keyskk, 7);    // 448 scheduled key bits / 64 key bits
 #endif
 
          aycw_block_decrypt(keyskk, r);   // r is the generated block output
 
          {
-/*#ifdef USEALLBITSLICE
+/*#ifdef USEBOOLSBOX
             uint8 dump[8];
             aycw_extractbsdata(r, 0, 64, dump);
             printf("%02x %02x %02x %02x  %02x %02x %02x %02x\n",dump[0],dump[1],dump[2],dump[3],dump[4],dump[5],dump[6],dump[7]);
