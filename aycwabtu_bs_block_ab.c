@@ -2,7 +2,7 @@
    aycwabtu_bs_block_ab.c
 
    this file contains the block implementation in bit sliced form where
-   the sbox is implemented as boolean equations. See #define  USEBOOLSBOX
+   the sbox is implemented as boolean equations. See #define  USEALLBITSLICE
 
 */
 
@@ -12,7 +12,7 @@
 #include "aycwabtu_config.h"
 #include "aycwabtu_bs_block_ab.h"
 
-#ifdef USEBOOLSBOX
+#ifdef USEALLBITSLICE
 
 
 /* table 19,27,55 is achieved from table 17, 35, 8,... by applying 7-x to lower 3 bits */
@@ -414,5 +414,5 @@ int aycw_checkPESheader(dvbcsa_bs_word_t *data, dvbcsa_bs_word_t *candidates)
    return ~ret;
 }
 
-#endif //#ifdef USEBOOLSBOX
+#endif //#ifdef USEALLBITSLICE
 

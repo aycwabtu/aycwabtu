@@ -209,7 +209,7 @@ void aycw_partsbench(void)
    printf("  aycw__vInitShiftRegister()      %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
 
    start = aycw__getTicks_ms();
-#ifndef USEBOOLSBOX
+#ifndef USEALLBITSLICE
    for (i = 0; i<max; i++) aycw_bit2byteslice(bs_448, 7);
 #endif
    printf("aycw_bit2byteslice(7)             %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
@@ -223,7 +223,7 @@ void aycw_partsbench(void)
    printf("aycw_block_decrypt                %.3fs\n", ((float)aycw__getTicks_ms() - start) / 1000);
 
    start = aycw__getTicks_ms();
-#ifdef USEBOOLSBOX
+#ifdef USEALLBITSLICE
    for (i = 0; i<56 * max; i++) aycw_block_sbox(r, bs_448);
 #else
    for (i = 0; i<56 * max; i++) aycw_block_sbox(r, bs_448);
@@ -246,8 +246,8 @@ void aycw_welcome_banner(void)
 #endif
    printf("\ngit version hash: %s\n", GITSHA1);
    printf("\nCPU only, single threaded version");
-#ifdef USEBOOLSBOX
-   printf(" - bool sbox");
+#ifdef USEALLBITSLICE
+   printf(" - all bit slice (bool sbox)");
 #else
    printf(" - table sbox");
 #endif
@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
    {
       bs_data_ib0[i] = bs_data_sb0[i];
    }
-#ifndef USEBOOLSBOX
+#ifndef USEALLBITSLICE
    aycw_bit2byteslice(bs_data_ib0, 1);
 #endif
 
@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
 
          aycw_assert_stream(&bs_data_ib0[64], 25, keys_bs, bs_data_sb0);     // check if first bytes of IB1 output are correct
 
-#ifndef USEBOOLSBOX
+#ifndef USEALLBITSLICE
          aycw_bit2byteslice(&bs_data_ib0[64], 1);
 #endif
 
@@ -436,14 +436,14 @@ int main(int argc, char *argv[])
          aycw_block_key_schedule(keys_bs, keyskk);
 
          /* byte transpose */
-#ifndef USEBOOLSBOX
+#ifndef USEALLBITSLICE
          aycw_bit2byteslice(keyskk, 7);    // 448 scheduled key bits / 64 key bits
 #endif
 
          aycw_block_decrypt(keyskk, r);   // r is the generated block output
 
          {
-/*#ifdef USEBOOLSBOX
+/*#ifdef USEALLBITSLICE
             uint8 dump[8];
             aycw_extractbsdata(r, 0, 64, dump);
             printf("%02x %02x %02x %02x  %02x %02x %02x %02x\n",dump[0],dump[1],dump[2],dump[3],dump[4],dump[5],dump[6],dump[7]);
