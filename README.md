@@ -27,6 +27,7 @@ to do list
 * support for 256 bits parallel with advanced vector extensions AVX
 * OpenCL support
 * optimize the block sbox boolean equations. Only slightly faster with 128 bits. See da_diett.pdf Chpt. 3.1
+* Ctrl-C handling on linux/windows
 
 speed optimization ideas
 ------------------------
@@ -40,6 +41,7 @@ developers
 * after changing the code, run tests with SELFTEST enabled to make sure the algorithm still works. It's too easy to break things.
 * run "make test"
 * test all the batch size implementations
+* share your benchmark values in the pull request
 * publish all your work please, AYCWABTU is released under GPL
 
 credits

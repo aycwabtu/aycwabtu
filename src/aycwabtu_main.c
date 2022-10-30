@@ -17,7 +17,7 @@
 #include "aycwabtu_bs_algo.h"
 #include "aycwabtu_ts.h"
 
-#define VERSION   "V1.1"
+#define VERSION   "V2.0"
 
 /* bitslice test cases */
 #include "aycwabtu_bs_testcases.h"
