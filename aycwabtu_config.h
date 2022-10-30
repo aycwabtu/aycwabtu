@@ -91,7 +91,7 @@ acyw_load_le32(const uint8_t *p)
 typedef enum {
    WORKPACKAGEFINISHED = 0,
 
-   KEYFOUND = 1,
+   OK = 0,
 
    ERR_FATAL = 16,
    ERR_USAGE,

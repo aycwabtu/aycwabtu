@@ -296,7 +296,7 @@ done
 echo ""
 echo -n "testing adaptation field handling ... "
 ../aycwabtu aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.ts 7FFAE9900000 FFFFFFFFFFFF >aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.log
-if [ $? -ne 1 ] ; then echo "test failed"; exit 1;fi; 
+if [ $? -ne 0 ] ; then echo "test failed"; exit 1;fi; 
 echo "ok"
 
 echo ""
@@ -306,7 +306,7 @@ do
    echo -n "testing key $KEY ... "
 	../tsgen testfile.ts $KEY
 	../aycwabtu testfile.ts $KEY FFFFFFFFFFFF >$KEY.log
-    if [ $? -ne 1 ] ; then echo "test failed"; exit 1;fi; 
+    if [ $? -ne 0 ] ; then echo "test failed"; exit 1;fi; 
    echo "found!"
 done
 

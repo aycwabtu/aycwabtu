@@ -499,7 +499,7 @@ int main(int argc, char *argv[])
                            cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7]);
 
                         if (!benchmark) aycw_write_keyfoundfile(cw);
-                        exit(KEYFOUND);
+                        exit(OK);
 
                      }
                   }
