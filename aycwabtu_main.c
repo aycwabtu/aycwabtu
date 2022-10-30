@@ -16,7 +16,6 @@
 #include "aycwabtu_bs_algo.h"
 #include "aycwabtu_ts.h"
 
-#include "aycwabtu_version.h"    // this file contains GITSHA1 define and is generated before build
 #define VERSION   "V1.1"
 
 /* bitslice test cases */
@@ -240,11 +239,10 @@ void aycw_partsbench(void)
 
 void aycw_welcome_banner(void)
 {
-   printf("AYCWABTU CSA brute forcer %s %s", VERSION, __DATE__);
+   printf("AYCWABTU CSA brute forcer %s %s built on %s", VERSION, GITHASH, __DATE__);
 #ifdef _DEBUG
    printf(" DEBUG");
 #endif
-   printf("\ngit version hash: %s\n", GITSHA1);
    printf("\nCPU only, single threaded version");
 #ifdef USEALLBITSLICE
    printf(" - all bit slice (bool sbox)");

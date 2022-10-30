@@ -5,16 +5,17 @@ LD          = gcc
 
 SHELL=bash
 
+GITHASH := $(shell git rev-parse --short HEAD)
+
 OBJDIR := obj
 
 DVBCSAINC 	:= libdvbcsa/dvbcsa
 DVBCSALIB 	:= $(DVBCSAINC)/libdvbcsa.a
 
-CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -O2
-#CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -D_DEBUG
+CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -O2 -DGITHASH=\"$(GITHASH)\"
+#CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -D_DEBUG -DGITHASH=\"$(GITHASH)\"
 
 obj/%.o : %.c | $(OBJDIR)
-	@if [ "$<" == "aycwabtu_main.c" ] ; then (echo -n "#define GITSHA1 \"`git rev-parse --short=16 HEAD`\"") >aycwabtu_version.h; echo "aycwabtu_version.h written"; fi;
 	$(CC) -c -MD $(CFLAGS) -o obj/$*.o $<
 
 ayc_src = \
