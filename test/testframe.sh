@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DUT=../aycwabtu.exe
+DUT=../aycwabtu
 
 KEYS=" \
 000000000000 \
@@ -288,14 +288,14 @@ echo "checking faulty ts files"
 for TS in $ERROR_TS
 do
    echo -n "testing $TS ... "
-	../aycwabtu $TS 000000000000 FFFFFFFFFFFF >$TS.log
+	$DUT $TS 000000000000 FFFFFFFFFFFF >$TS.log
     if [ $? -lt 2 ] ; then echo "test failed"; exit 1;fi; 
    echo "ok"
 done
 
 echo ""
 echo -n "testing adaptation field handling ... "
-../aycwabtu aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.ts 7FFAE9900000 FFFFFFFFFFFF >aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.log
+$DUT aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.ts 7FFAE9900000 FFFFFFFFFFFF >aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.log
 if [ $? -ne 0 ] ; then echo "test failed"; exit 1;fi; 
 echo "ok"
 
@@ -305,7 +305,7 @@ for KEY in $KEYS
 do
    echo -n "testing key $KEY ... "
 	../tsgen testfile.ts $KEY
-	../aycwabtu testfile.ts $KEY FFFFFFFFFFFF >$KEY.log
+	$DUT testfile.ts $KEY FFFFFFFFFFFF >$KEY.log
     if [ $? -ne 0 ] ; then echo "test failed"; exit 1;fi; 
    echo "found!"
 done

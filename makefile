@@ -7,16 +7,16 @@ SHELL=bash
 
 GITHASH := $(shell git rev-parse --short HEAD)
 
-OBJDIR := obj
+CFLAGS      = \
+    -w                                  \
+    -I src/libdvbcsa/dvbcsa             \
+    -msse2                              \
+    -O2                                 \
+    -DGITHASH=\"$(GITHASH)\" 
 
-DVBCSAINC 	:= libdvbcsa/dvbcsa
-DVBCSALIB 	:= $(DVBCSAINC)/libdvbcsa.a
-
-CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -O2 -DGITHASH=\"$(GITHASH)\"
-#CFLAGS      =  -w -I $(DVBCSAINC) -msse2 -D_DEBUG -DGITHASH=\"$(GITHASH)\"
-
-obj/%.o : %.c | $(OBJDIR)
-	$(CC) -c -MD $(CFLAGS) -o obj/$*.o $<
+obj/%.o : src/%.c
+	@mkdir -p $(@D)
+	$(CC) -c -MD $(CFLAGS)-o obj/$*.o $<
 
 ayc_src = \
 	aycwabtu_main.c             \
@@ -30,21 +30,25 @@ ayc_src = \
 
 tsgen_src = tsgen.c
 
-ayc_obj = $(ayc_src:%.c=obj/%.o)
-tsgen_obj = $(tsgen_src:%.c=obj/%.o)
+libdvbcsa_src = \
+	libdvbcsa/dvbcsa_algo.c     \
+	libdvbcsa/dvbcsa_block.c    \
+	libdvbcsa/dvbcsa_key.c      \
+	libdvbcsa/dvbcsa_stream.c
+
+ayc_obj         = $(ayc_src:%.c=obj/%.o)
+tsgen_obj       = $(tsgen_src:%.c=obj/%.o)
+libdvbcsa_obj   = $(libdvbcsa_src:%.c=obj/%.o)
 
 all: aycwabtu
    
-$(DVBCSALIB):
-	@echo making target 'all' in $(DVBCSAMAKE)
-	make --directory=libdvbcsa all
 
-aycwabtu: $(ayc_obj) $(DVBCSALIB)
-	$(LD) -static -s -o $@ $(ayc_obj) -static -L. -ldvbcsa/dvbcsa/libdvbcsa
+aycwabtu: $(ayc_obj) $(libdvbcsa_obj)
+	$(LD) -static -s -o $@ $(ayc_obj) $(libdvbcsa_obj)
 	@echo $@ created
 
-tsgen: $(tsgen_obj) $(DVBCSALIB)
-	$(LD) -o $@ $(tsgen_obj) -static -L. -ldvbcsa/dvbcsa/libdvbcsa
+tsgen: $(tsgen_obj) $(libdvbcsa_obj)
+	$(LD) -o $@ $(tsgen_obj) $(libdvbcsa_obj)
 	@echo $@ created
 
 
@@ -53,16 +57,11 @@ test: aycwabtu tsgen always
 
 always:
 
-# pull in dependency info for *existing* .o files
--include $(ayc_obj:.o=.d)
--include $(tsgen_obj:.o=.d)
 
-$(ayc_obj) $(tsgen_obj) : makefile
+aycwabtu tsgen : makefile
 
-$(OBJDIR):
-	mkdir $(OBJDIR)
+include $(wildcard obj/*.d) $(wildcard obj/libdvbcsa/*.d)
 
 clean:
 	@rm -rf aycwabtu tsgen aycwabtu.exe tsgen.exe obj
-	@make -s --directory=libdvbcsa clean
 
