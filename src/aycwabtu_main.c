@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>         /* getopt() */
 
 #ifdef WIN32
 #  include <windows.h>
@@ -16,8 +17,7 @@
 #include "aycwabtu_bs_algo.h"
 #include "aycwabtu_ts.h"
 
-#include "aycwabtu_version.h"    // this file contains GITSHA1 define and is generated before build
-#define VERSION   "V1.1"
+#define VERSION   "V2.0"
 
 /* bitslice test cases */
 #include "aycwabtu_bs_testcases.h"
@@ -36,8 +36,9 @@
 #define FOUNDFILENAME   "keyfound"
 
 /****************** globals ***********************/
-uint32 currentkey32;
-uint32 stopkey32;
+/* store cw bytes 0..3 and 4 without checksum for easy incrementing */
+uint32 currentkey32     = 0;
+uint32 stopkey32        = -1;
 
 void ayc_printhexbytes(unsigned char *c, uint8 len)
 {
@@ -240,11 +241,10 @@ void aycw_partsbench(void)
 
 void aycw_welcome_banner(void)
 {
-   printf("AYCWABTU CSA brute forcer %s %s", VERSION, __DATE__);
+   printf("AYCWABTU CSA brute forcer %s %s built on %s", VERSION, GITHASH, __DATE__);
 #ifdef _DEBUG
    printf(" DEBUG");
 #endif
-   printf("\ngit version hash: %s\n", GITSHA1);
    printf("\nCPU only, single threaded version");
 #ifdef USEALLBITSLICE
    printf(" - all bit slice (bool sbox)");
@@ -257,11 +257,41 @@ void aycw_welcome_banner(void)
 }
 
 
+void usage(void) {
+    printf("Usage: aycwabtu [OPTION]\n");
+    printf("   -t filename      transport stream file to obtain three packets\n");
+    printf("                    for brute force attack\n");
+    printf("   -a start cw      cw to start the brute force attack with. Checksum\n");
+    printf("                    bytes are omittted, e.g. 112233556677 [000000000000]\n");
+    printf("   -o stop cw       when this cw is reached, program terminates [FFFFFFFFFFFF]\n");
+    printf("   -b benchmark     start benchmark run with internal demo ts data\n");
+    printf("   -s self test     execute algorithm self test and quit\n");
+    /* TBD: with "benchmark" the user expects program to not stop and just continue measuring thoughput?
+            Better rename to "demo"? */
+    exit(ERR_USAGE);
+}
+
+uint32_t ayc_scan_cw_param(const char *string) {
+    uint8_t tmp[8];
+    
+    if ((strlen(string) != 12) || (6 != sscanf(string, "%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX", &tmp[0], &tmp[1], &tmp[2], &tmp[4], &tmp[5], &tmp[6])))
+    {
+        printf("key parameter format incorrect. 6 hex bytes expected.\n");
+        usage();
+    }
+    return tmp[0] << 24 | tmp[1] << 16 | tmp[2] << 8 | tmp[4];
+}
+
 int main(int argc, char *argv[])
 {
    int      i, k;
-   int      benchmark=0;
-   
+   int      benchmark = 0;
+   int      selftest = 0;
+   int      opt;
+   char*    tsfile = NULL;
+   unsigned char probedata[3][16];
+
+
    /************** stream ***************/
    dvbcsa_bs_word_t     bs_data_sb0[8 * 16];    // constant scrambled data blocks SB0 + SB1, global init for stream, da_diett.pdf 5.1
    dvbcsa_bs_word_t     bs_data_ib0[8 * 16];    // IB0 is bit/byte sliced block init vector, ib1 is bit sliced stream output
@@ -278,69 +308,77 @@ int main(int argc, char *argv[])
 
    uint8 keylist[BS_BATCH_SIZE][8];     /* the list of keys for the batch run in non-bitsliced form */
 
-   /************ dummy data for benchmark run *****************/
-   /* first two 8 byte data blocks from three different encrypted ts packets for brute force attack.
-      initialized with test data for benchmark run if no real data is available */
-   unsigned char probedata[3][16] = {
-      { 0xB2, 0x74, 0x85, 0x51, 0xF9, 0x3C, 0x9B, 0xD2,  0x30, 0x9E, 0x8E, 0x78, 0xFB, 0x16, 0x55, 0xA9},
-      { 0x25, 0x2D, 0x3D, 0xAB, 0x5E, 0x3B, 0x31, 0x39,  0xFE, 0xDF, 0xCD, 0x84, 0x51, 0x5A, 0x86, 0x4A},
-      { 0xD0, 0xE1, 0x78, 0x48, 0xB3, 0x41, 0x63, 0x22,  0x25, 0xA3, 0x63, 0x0A, 0x0E, 0xD3, 0x1C, 0x70} };
-   currentkey32 = 0x00 << 24 | 0x11 << 16 | 0x15 << 8 | 0x00;
-   /* key   00 11 22 33  44 00 00 44 decrypts to
-               000001ff11111111aa11111111111155
-               000001ff11111111aa11111111111156
-               000001ff11111111aa11111111111157  */
-   /* expected stream output in IB1 is 6F CA 96 27 30 91 03 71 */
-   stopkey32 = -1;   /* search up to FFFFF... */
 
-   /************ global initilaization *****************/
-   aycw_welcome_banner();
-   aycw_partsbench();
+    while((opt = getopt(argc, argv, "t:a:o:bs")) != -1) 
+    { 
+        switch(opt) 
+        { 
+            case 't': 
+                tsfile = optarg;
+                break; 
+            case 'a': 
+                currentkey32 = ayc_scan_cw_param(optarg);
+                break; 
+            case 'o': 
+                stopkey32 = ayc_scan_cw_param(optarg);
+                break; 
+            case 'b': 
+                benchmark = 1;
+                break; 
+            case 's': 
+                selftest = 1;
+                break; 
+            case ':': 
+                printf("option needs a value\n"); 
+                break; 
+            default:
+                usage();
+                break; 
+        } 
+    } 
+    for(; optind < argc; optind++){     
+        printf("unknown command: %s\n", argv[optind]); 
+        usage();
+    }
 
-   if (argc == 4)
-   {
-      unsigned char tmp[8+3];
+    /* check parameter plausibility */
+    if ((!benchmark) && (!tsfile))
+    {
+        printf("Neither ts filename provided nor benchmark enabled\n");
+        usage();
+    }
+    if (selftest)
+    {
+        /* Needed for exec post build testing in github pipeline */
+        printf("Option self-test not available yet, sorry\n");
+        usage();
+    }
 
-      /* usage:   aycwabtu.exe <tsfile> <start key 6 hex digits> <stop key 6 hex digits> */
-      ayc_read_ts(argv[1], &probedata[0][0]);
 
-      if (6 != sscanf(argv[2], "%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX", &tmp[0], &tmp[1], &tmp[2], &tmp[4], &tmp[5], &tmp[6]))
-      {
-         printf("start key parameter format incorrect. 6 hex bytes expected.\n");
-         exit(ERR_STARTKEY);
-      }
-      // For easier calculation. Endianess?? Take byte 4 as LSB, looks nice
-      currentkey32 = tmp[0] << 24 | tmp[1] << 16 | tmp[2] << 8 | tmp[4];
-
-      if (6 != sscanf(argv[3], "%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX", &tmp[0], &tmp[1], &tmp[2], &tmp[4], &tmp[5], &tmp[6]))
-      {
-         printf("stop key parameter format incorrect. 6 hex bytes expected.\n");
-         exit(ERR_STOPKEY);
-      }
-      // For easier calculation. Endianess?? Take byte 4 as LSB, looks nice
-      stopkey32 = tmp[0] << 24 | tmp[1] << 16 | tmp[2] << 8 | tmp[4];
-      
-      aycw_read_resumefile(&currentkey32);
-   }
-   else if (argc == 1)
-   {
-      printf("no TS input file given and no resume file found.\nUsing test data for benchmark run\n");
-      printf("(pssst, the correct key is 00 11 22 [33] 44 00 00 [44])\n");
-      benchmark=1;
-   }
-   else
-   {
-      printf("usage:\n");
-      printf("aycwabtu.exe ts-file startkey stopkey\n\n");
-      printf("    ts-file        transport stream file to obtain three packets\n");
-      printf("                   for brute force attack\n");
-      printf("    startkey       cw to start the brute force attack with. Checksum\n");
-      printf("                   bytes are omittted. Format:   112233556677\n");
-      printf("    stopkey        when this key is reached, program terminates\n");
-      printf("\n");
-      printf("  for benchmark run aycwabtu.exe without parameters\n");
-      exit(ERR_USAGE);
-   }
+    aycw_welcome_banner();
+    aycw_partsbench();
+    if (benchmark)
+    {
+       printf("Benchmark mode enabled. Using internal ts data\n");
+       /************ dummy data for benchmark run *****************/
+       /* first two 8 byte data blocks from three different encrypted ts packets for brute force attack.
+          initialized with test data for benchmark run */
+       unsigned char probedata[3][16] = {
+          { 0xB2, 0x74, 0x85, 0x51, 0xF9, 0x3C, 0x9B, 0xD2,  0x30, 0x9E, 0x8E, 0x78, 0xFB, 0x16, 0x55, 0xA9},
+          { 0x25, 0x2D, 0x3D, 0xAB, 0x5E, 0x3B, 0x31, 0x39,  0xFE, 0xDF, 0xCD, 0x84, 0x51, 0x5A, 0x86, 0x4A},
+          { 0xD0, 0xE1, 0x78, 0x48, 0xB3, 0x41, 0x63, 0x22,  0x25, 0xA3, 0x63, 0x0A, 0x0E, 0xD3, 0x1C, 0x70} };
+       currentkey32 = 0x00 << 24 | 0x11 << 16 | 0x15 << 8 | 0x00;
+       /* key   00 11 22 33  44 00 00 44 decrypts to
+                   000001ff11111111aa11111111111155
+                   000001ff11111111aa11111111111156
+                   000001ff11111111aa11111111111157  */
+       /* expected stream output in IB1 is 6F CA 96 27 30 91 03 71 */
+       stopkey32 = -1;   /* search up to FFFFF... */
+    }
+    else
+    {
+        ayc_read_ts(tsfile, &probedata[0][0]);
+    }
 
 
    printf("start key is %02X %02X %02X [] %02X %02X %02X []\n",
@@ -501,7 +539,7 @@ int main(int argc, char *argv[])
                            cw[0], cw[1], cw[2], cw[3], cw[4], cw[5], cw[6], cw[7]);
 
                         if (!benchmark) aycw_write_keyfoundfile(cw);
-                        exit(KEYFOUND);
+                        exit(OK);
 
                      }
                   }
