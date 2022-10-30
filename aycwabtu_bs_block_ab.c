@@ -150,7 +150,7 @@ void aycw_block_key_schedule(const dvbcsa_bs_word_t* keys, dvbcsa_bs_word_t* kk)
 }
 
 /* apply the sbox algo to the batches w.....w+7 */
-AYCW_INLINE void aycw_block_sbox(dvbcsa_bs_word_t *out, dvbcsa_bs_word_t *in)
+void aycw_block_sbox(dvbcsa_bs_word_t *out, dvbcsa_bs_word_t *in)
 {
       dvbcsa_bs_word_t b_7 = in[7];
       dvbcsa_bs_word_t b_6 = in[6];

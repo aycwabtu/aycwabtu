@@ -224,7 +224,7 @@ AYCW_INLINE void aycw__ShiftRegisterLeft(dvbcsa_bs_word_t * RegisterValue, uint8
 
 }
 
-AYCW_INLINE void aycw__vCaculatePQXYZ(dvbcsa_bs_word_t * A_local, aycw_tstPQXYZ * stPQXYZ)
+void aycw__vCaculatePQXYZ(dvbcsa_bs_word_t * A_local, aycw_tstPQXYZ * stPQXYZ)
 {   
     /*dvbcsa_bs_word_t s1a,s1b,s2a,s2b,s3a,s3b,s4a,s4b,s5a,s5b,s6a,s6b,s7a,s7b;*/
 
