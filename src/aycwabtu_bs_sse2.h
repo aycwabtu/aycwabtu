@@ -11,8 +11,6 @@ typedef __m128i dvbcsa_bs_word_t;
 #define BS_BATCH_BYTES 16
 #define BS_BATCH_SHIFT  7
 
-//#define BS_SSE_X64
-
 #ifdef BS_SSE_X64
 #define BS_VAL(n, m)	_mm_set_epi64x(n, m)
 #define BS_VAL64(n)	BS_VAL(0x##n##ULL, 0x##n##ULL)
@@ -44,6 +42,19 @@ dvbcsa_bs_word_t BS_SHR(dvbcsa_bs_word_t v, int n);
 #define BS_EXTLS32(a)      _mm_cvtsi128_si32(a)       // Moves the least significant 32 bits of a to a 32-bit integer.
 
 #define BS_EMPTY()
+
+#ifdef __SSE4_2__
+
+#include <immintrin.h>
+#define BS_EXTRACT32(a,n)    _mm_extract_epi32(a,n)
+#define CHECK_ZERO(a) _mm_testz_si128((a),(a))
+
+#else
+
+#define BS_EXTRACT32(a,n)  BS_EXTLS32(BS_SHR8(c, (n*4)))
+#define CHECK_ZERO(a) (_mm_movemask_epi8(_mm_cmpeq_epi32((a),_mm_setzero_si128())) == 0xFFFF)
+
+#endif
 
 #endif
 

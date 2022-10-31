@@ -10,7 +10,7 @@ GITHASH := $(shell git rev-parse --short HEAD)
 CFLAGS      = \
     -w                                  \
     -I src/libdvbcsa/dvbcsa             \
-    -msse2                              \
+    -msse2  -msse4.2                    \
     -O2                                 \
     -DGITHASH=\"$(GITHASH)\" 
 
