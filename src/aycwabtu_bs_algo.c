@@ -240,9 +240,7 @@ void aycw_extractbsdata(dvbcsa_bs_word_t* bs_data, unsigned char slice, unsigned
       tmp = 0;
       for (j = 0; j < 8; j++)
       {
-         dvbcsa_bs_word_t  bs_tmp, tmp2;
-
-         tmp2 = BS_SHR(bs_data[i * 8 + j], slice);
+         dvbcsa_bs_word_t  bs_tmp;
          tmp = tmp >> 1;
          bs_tmp = BS_AND(BS_SHR(bs_data[i * 8 + j], slice), BS_VAL_LSDW(1));
          tmp |= (uint8)BS_EXTLS32(BS_SHL(bs_tmp, 7));
