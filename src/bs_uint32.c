@@ -1,5 +1,5 @@
 
-#include "aycwabtu_config.h"
+#include "config.h"
 
 #if PARALLEL_MODE==PARALLEL_32_INT
 

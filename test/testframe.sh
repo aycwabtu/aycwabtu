@@ -266,15 +266,15 @@ FFFFFFFFFFFF"
 
 #aycwabtu has to throw error with these files
 ERROR_TS=" \
-aycwabtu_Testfile_adaptonly.ts                 \
-aycwabtu_Testfile_adaptreserved.ts             \
-aycwabtu_Testfile_decrypted.ts                 \
-aycwabtu_Testfile_pid.ts                       \
-aycwabtu_Testfile_pusi.ts                      \
-aycwabtu_Testfile_size.ts                      \
-aycwabtu_Testfile_sync.ts                      \
-aycwabtu_Testfile_parity_change.ts             \
-aycwabtu_Testfile_unencrypted.ts"
+Testfile_adaptonly.ts                 \
+Testfile_adaptreserved.ts             \
+Testfile_decrypted.ts                 \
+Testfile_pid.ts                       \
+Testfile_pusi.ts                      \
+Testfile_size.ts                      \
+Testfile_sync.ts                      \
+Testfile_parity_change.ts             \
+Testfile_unencrypted.ts"
 
 
 echo "--------- AYCWABTU test frame -----------"
@@ -296,9 +296,9 @@ done
 
 echo ""
 echo -n "testing adaptation field handling ... "
-$DUT -t aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.ts -a 7FFAE9900000 >aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.log
+$DUT -t Testfile_CW_7FFAE9A02486.ts -a 7FFAE9900000 >Testfile_CW_7FFAE9A02486.log
 if [ $? -ne 0 ] ; then echo "test failed with $?"; exit 1;fi; 
-rm aycwabtu_Testfile_PID_123_CW_7FFAE9A02486.log
+rm Testfile_CW_7FFAE9A02486.log
 echo "ok"
 
 echo ""

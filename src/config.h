@@ -20,9 +20,9 @@ typedef uint32_t     uint32;
 //#define HAVE_X64_COMPILER
 
 #if PARALLEL_MODE==PARALLEL_32_INT
-#include "aycwabtu_bs_uint32.h"
+#include "bs_uint32.h"
 #elif PARALLEL_MODE==PARALLEL_128_SSE2
-#include "aycwabtu_bs_sse2.h"
+#include "bs_sse2.h"
 #else
 #error "unknown/undefined parallel mode"
 #endif

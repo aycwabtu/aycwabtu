@@ -19,14 +19,14 @@ obj/%.o : src/%.c
 	$(CC) -c -MD $(CFLAGS)-o obj/$*.o $<
 
 ayc_src = \
-	aycwabtu_main.c             \
-	aycwabtu_bs_algo.c          \
-	aycwabtu_bs_block.c         \
-	aycwabtu_bs_block_ab.c      \
-	aycwabtu_bs_sse2.c     		\
-	aycwabtu_bs_stream.c        \
-	aycwabtu_bs_uint32.c	    \
-	aycwabtu_ts.c
+	main.c             \
+	bs_algo.c          \
+	bs_block.c         \
+	bs_block_ab.c      \
+	bs_sse2.c     		\
+	bs_stream.c        \
+	bs_uint32.c	    \
+	ts.c
 
 tsgen_src = tsgen.c
 

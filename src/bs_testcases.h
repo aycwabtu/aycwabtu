@@ -1,4 +1,4 @@
-#include "aycwabtu_config.h"
+#include "config.h"
 
 extern unsigned char bs_tc_crypteddata[16];
 extern const unsigned char bs_tc_keys[32*4][8];

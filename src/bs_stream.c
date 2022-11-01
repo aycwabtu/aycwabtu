@@ -1,5 +1,5 @@
-#include "aycwabtu_config.h"
-#include "aycwabtu_bs_stream.h"
+#include "config.h"
+#include "bs_stream.h"
 
 
 /* do the round mechanism and provide two stream bits per run */
