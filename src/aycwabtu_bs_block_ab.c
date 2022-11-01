@@ -402,10 +402,10 @@ int aycw_checkPESheader(dvbcsa_bs_word_t *data, dvbcsa_bs_word_t *candidates)
 #if PARALLEL_MODE == PARALLEL_32_INT
    ret  = BS_EXTLS32(c);
 #elif PARALLEL_MODE == PARALLEL_128_SSE2
-   ret  = BS_EXTLS32(BS_SHR8(c, 0));
-   ret &= BS_EXTLS32(BS_SHR8(c, 4));
-   ret &= BS_EXTLS32(BS_SHR8(c, 8));
-   ret &= BS_EXTLS32(BS_SHR8(c, 12));
+	 ret  = BS_EXTRACT32(c,0);
+	 ret &= BS_EXTRACT32(c,1);
+	 ret &= BS_EXTRACT32(c,2);
+	 ret &= BS_EXTRACT32(c,3);
 #else
 #error wrong parallel mode
 #endif
