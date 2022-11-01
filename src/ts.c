@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "aycwabtu_config.h"
+#include "config.h"
 
 
 #define  PCKTSIZE             188

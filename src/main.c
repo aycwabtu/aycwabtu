@@ -10,17 +10,17 @@
 #  include <time.h>
 #endif
 
-#include "aycwabtu_config.h"
-#include "aycwabtu_bs_stream.h"
-#include "aycwabtu_bs_block.h"
-#include "aycwabtu_bs_block_ab.h"
-#include "aycwabtu_bs_algo.h"
-#include "aycwabtu_ts.h"
+#include "config.h"
+#include "bs_stream.h"
+#include "bs_block.h"
+#include "bs_block_ab.h"
+#include "bs_algo.h"
+#include "ts.h"
 
 #define VERSION   "V2.0"
 
 /* bitslice test cases */
-#include "aycwabtu_bs_testcases.h"
+#include "bs_testcases.h"
 
 /* libdvbcsa non-bitsliced decrypt function for key candidate verification */
 #include "dvbcsa.h"

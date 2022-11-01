@@ -19,14 +19,14 @@ obj/%.o : src/%.c
 	$(CC) -c -MD $(CFLAGS)-o obj/$*.o $<
 
 ayc_src = \
-	aycwabtu_main.c             \
-	aycwabtu_bs_algo.c          \
-	aycwabtu_bs_block.c         \
-	aycwabtu_bs_block_ab.c      \
-	aycwabtu_bs_sse2.c     		\
-	aycwabtu_bs_stream.c        \
-	aycwabtu_bs_uint32.c	    \
-	aycwabtu_ts.c
+	main.c             \
+	bs_algo.c          \
+	bs_block.c         \
+	bs_block_ab.c      \
+	bs_sse2.c     		\
+	bs_stream.c        \
+	bs_uint32.c	    \
+	ts.c
 
 tsgen_src = tsgen.c
 
@@ -52,8 +52,9 @@ tsgen: $(tsgen_obj) $(libdvbcsa_obj)
 	@echo $@ created
 
 
-test: aycwabtu tsgen always
-	cd test && ./testframe.sh | tee testframe.log
+check: aycwabtu tsgen always
+	timeout 5 ./aycwabtu -t test/Testfile_CW_7FFAE9A02486.ts -a 7FFAE9A00000
+	cd test && timeout 60 ./testframe.sh
 
 always:
 

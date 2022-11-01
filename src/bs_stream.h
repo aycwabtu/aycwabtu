@@ -1,7 +1,7 @@
 #ifndef aycw_bs_stream_h
 #define aycw_bs_stream_h
 
-#include "aycwabtu_config.h"
+#include "config.h"
 
 /****************************************** stream prototypes ********************************/
 

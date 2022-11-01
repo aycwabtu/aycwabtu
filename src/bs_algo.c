@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "aycwabtu_config.h"
-#include "aycwabtu_bs_algo.h"
+#include "config.h"
+#include "bs_algo.h"
 
 #ifdef SELFTEST
 #include "dvbcsa.h"

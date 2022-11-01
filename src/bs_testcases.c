@@ -1,6 +1,6 @@
 /* CSA brute force bitslice test cases */
 
-#include "aycwabtu_config.h"
+#include "config.h"
 #include <stdio.h>
 
 /*unsigned char pusi_key[] = {0x64 ,0x01 ,0x57 ,0xBC ,0x16 ,0xA6 ,0xF9 ,0xB5};*/

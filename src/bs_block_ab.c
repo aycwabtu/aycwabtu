@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "aycwabtu_config.h"
-#include "aycwabtu_bs_block_ab.h"
+#include "config.h"
+#include "bs_block_ab.h"
 
 #ifdef USEALLBITSLICE
 
