@@ -39,7 +39,7 @@ speed optimization ideas
 developers
 ----------
 * after changing the code, run tests with SELFTEST enabled to make sure the algorithm still works. It's too easy to break things.
-* run "make test"
+* run "make check"
 * test all the batch size implementations
 * share your benchmark values in the pull request
 * publish all your work please, AYCWABTU is released under GPL

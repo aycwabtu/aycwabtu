@@ -52,8 +52,9 @@ tsgen: $(tsgen_obj) $(libdvbcsa_obj)
 	@echo $@ created
 
 
-test: aycwabtu tsgen always
-	cd test && ./testframe.sh | tee testframe.log
+check: aycwabtu tsgen always
+	timeout 5 ./aycwabtu -t test/Testfile_CW_7FFAE9A02486.ts -a 7FFAE9A00000
+	cd test && timeout 60 ./testframe.sh | tee testframe.log
 
 always:
 
