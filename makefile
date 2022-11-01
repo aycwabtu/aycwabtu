@@ -54,7 +54,7 @@ tsgen: $(tsgen_obj) $(libdvbcsa_obj)
 
 check: aycwabtu tsgen always
 	timeout 5 ./aycwabtu -t test/Testfile_CW_7FFAE9A02486.ts -a 7FFAE9A00000
-	cd test && timeout 60 ./testframe.sh | tee testframe.log
+	cd test && timeout 60 ./testframe.sh
 
 always:
 

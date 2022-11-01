@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e      # fail on all errors
+
 DUT=../aycwabtu
 
 KEYS=" \
@@ -287,17 +289,15 @@ echo ""
 echo "checking faulty ts files"
 for TS in $ERROR_TS
 do
-   echo -n "testing $TS ... "
-	$DUT -t $TS >$TS.log
-    if [ $? -lt 2 ] ; then echo "test failed with $?"; exit 1;fi; 
+    echo -n "testing $TS ... "
+	! $DUT -t $TS >$TS.log
     rm $TS.log
-   echo "ok"
+    echo "ok"
 done
 
 echo ""
 echo -n "testing adaptation field handling ... "
 $DUT -t Testfile_CW_7FFAE9A02486.ts -a 7FFAE9900000 >Testfile_CW_7FFAE9A02486.log
-if [ $? -ne 0 ] ; then echo "test failed with $?"; exit 1;fi; 
 rm Testfile_CW_7FFAE9A02486.log
 echo "ok"
 
@@ -305,12 +305,11 @@ echo ""
 echo "checking if test keys are found in all batch slices"
 for KEY in $KEYS
 do
-   echo -n "testing key $KEY ... "
+    echo -n "testing key $KEY ... "
 	../tsgen testfile.ts $KEY
 	$DUT -t testfile.ts -a $KEY >$KEY.log
-    if [ $? -ne 0 ] ; then echo "test failed"; exit 1;fi; 
     rm $KEY.log
-   echo "found!"
+    echo "found!"
 done
 
 echo ""
