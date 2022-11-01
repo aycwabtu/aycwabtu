@@ -53,8 +53,9 @@ tsgen: $(tsgen_obj) $(libdvbcsa_obj)
 
 
 check: aycwabtu tsgen always
-	timeout 5 ./aycwabtu -t test/Testfile_CW_7FFAE9A02486.ts -a 7FFAE9A00000
-	cd test && timeout 60 ./testframe.sh
+# just 'timeout' will let windows find C:\Windows\System32\timeout.exe first :(
+	/usr/bin/timeout 5 ./aycwabtu -t test/Testfile_CW_7FFAE9A02486.ts -a 7FFAE9A00000
+	cd test && /usr/bin/timeout 60 ./testframe.sh
 
 always:
 

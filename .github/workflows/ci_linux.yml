@@ -1,4 +1,4 @@
-name: CI default
+name: CI linux
 
 on:
   push:

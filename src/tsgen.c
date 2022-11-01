@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
    cw[3] = cw[0] + cw[1] + cw[2];
    cw[7] = cw[4] + cw[5] + cw[6];
 
-   if (filehdl = fopen(argv[1], "w"))
+   if (filehdl = fopen(argv[1], "wb"))
    {
       for (i = 0; i < 3; i++)
       {
