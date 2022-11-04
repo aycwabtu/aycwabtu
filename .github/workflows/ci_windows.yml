@@ -17,4 +17,8 @@ jobs:
       run: make
     - name: make check
       run: make check
-    
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        path: aycwabtu.exe
+        if-no-files-found: error
