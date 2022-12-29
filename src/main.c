@@ -89,7 +89,7 @@ void aycw_perf_show(uint32_t currentkey32, uint32_t innerbatch)
 #ifdef _DEBUG
 #define DIVIDER 1
 #else
-#define DIVIDER 16      // reduce update frequency for release
+#define DIVIDER 8      // reduce update frequency for release
 #endif
 
    divider++; 
@@ -245,7 +245,7 @@ void aycw_welcome_banner(void)
 #ifdef _DEBUG
    printf(" DEBUG");
 #endif
-   printf("\nCPU only, single threaded version");
+   printf("\nCPU only, OpenMP version");
 #ifdef USEALLBITSLICE
    printf(" - all bit slice (bool sbox)");
 #else
