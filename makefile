@@ -11,6 +11,7 @@ CFLAGS      = \
     -w                                  \
     -I src/libdvbcsa/dvbcsa             \
     -msse2  -msse4.2                    \
+	-fopenmp \
     -O2                                 \
     -DGITHASH=\"$(GITHASH)\" 
 
@@ -44,7 +45,7 @@ all: aycwabtu
    
 
 aycwabtu: $(ayc_obj) $(libdvbcsa_obj)
-	$(LD) -static -s -o $@ $(ayc_obj) $(libdvbcsa_obj)
+	$(LD) -s -fopenmp  -o $@ $(ayc_obj) $(libdvbcsa_obj)
 	@echo $@ created
 
 tsgen: $(tsgen_obj) $(libdvbcsa_obj)
